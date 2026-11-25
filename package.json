@@ -1,0 +1,19 @@
+{
+  "name": "ai-study-buddy",
+  "version": "1.0.0",
+  "description": "AI Study Buddy Assistant: Node.js + Express backend using the Google Gemini API",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node backend/test-utils.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@google/genai": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0"
+  }
+}
