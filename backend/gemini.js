@@ -1,5 +1,4 @@
 
-// All communication with Google Gemini happens here.
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEMS } from "./prompts.js";
 import { toContents, parseJsonLoose } from "./utils.js";
@@ -8,9 +7,8 @@ let client;
 
 export const hasKey = () => Boolean(process.env.GEMINI_API_KEY);
 
-// Default Gemini model
 export const modelName = () =>
-  process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
 function ai() {
   if (!hasKey()) {
@@ -26,29 +24,35 @@ function ai() {
   }));
 }
 
-// Convert Gemini errors into understandable messages.
+// Convert errors into readable messages.
 export function friendly(e) {
   const m = String((e && e.message) || e);
 
-  if (e && e.status === 500 && /GEMINI_API_KEY is missing/.test(m))
+  if (e && e.status === 500 && /GEMINI_API_KEY is missing/.test(m)) {
     return m;
+  }
 
-  if (/API key|API_KEY|PERMISSION_DENIED|403|401/i.test(m))
+  if (/API key|API_KEY|PERMISSION_DENIED|403|401/i.test(m)) {
     return "Gemini rejected the API key. Check GEMINI_API_KEY in Vercel.";
+  }
 
-  if (/404|NOT_FOUND|model/i.test(m))
-    return "Gemini model not found. Check the GEMINI_MODEL environment variable.";
+  if (/404|NOT_FOUND/i.test(m)) {
+    return "Google API Error: " + m.slice(0, 500);
+  }
 
-  if (/429|RESOURCE_EXHAUSTED|quota|rate/i.test(m))
+  if (/429|RESOURCE_EXHAUSTED|quota|rate/i.test(m)) {
     return "Gemini free usage limit reached. Please wait and try again.";
+  }
 
-  if (/503|UNAVAILABLE|overloaded/i.test(m))
+  if (/503|UNAVAILABLE|overloaded/i.test(m)) {
     return "Gemini is busy right now. Please try again later.";
+  }
 
-  if (/SAFETY|blocked/i.test(m))
+  if (/SAFETY|blocked/i.test(m)) {
     return "Gemini couldn't answer that request. Try rephrasing it.";
+  }
 
-  return "Gemini request failed: " + m.slice(0, 160);
+  return "Gemini request failed: " + m.slice(0, 500);
 }
 
 export const statusOf = (e) =>
@@ -58,7 +62,7 @@ export const statusOf = (e) =>
       ? 500
       : 502;
 
-// Stream AI chat responses.
+// Stream chat responses.
 export async function* streamChat({ messages, images, task }) {
   const stream = await ai().models.generateContentStream({
     model: modelName(),
@@ -101,7 +105,7 @@ export async function generateJson(prompt) {
   }
 }
 
-// Generate short automatic chat titles.
+// Generate automatic chat titles.
 export async function generateTitle(text) {
   const r = await ai().models.generateContent({
     model: modelName(),
